@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webカメラの映像を表示</title>
+</head>
+<body>
+
+    <h1>Webカメラ映像を選んで表示</h1>
+
+    <!-- カメラを選択するためのセレクトボックス -->
+    <select id="cameraSelect">
+        <option value="">カメラを選択</option>
+    </select>
+
+    <!-- Webカメラ映像を表示 -->
+    <video id="webcam" width="640" height="480" autoplay></video>
+
+    <script>
+        // デバイスのリストを取得し、カメラをセレクトボックスに追加する関数
+        async function listDevices() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices(); // デバイスリストを取得
+                const videoDevices = devices.filter(device => device.kind === 'videoinput'); // ビデオ入力デバイスのみをフィルタ
+
+                // セレクトボックスの取得
+                const cameraSelect = document.getElementById('cameraSelect');
+
+                // セレクトボックスにカメラを追加
+                videoDevices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `カメラ ${cameraSelect.length + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
+                // 最初のカメラを自動選択
+                if (videoDevices.length > 0) {
+                    cameraSelect.value = videoDevices[0].deviceId;
+                    startWebCam(videoDevices[0].deviceId);
+                }
+            } catch (error) {
+                console.error('デバイスの取得に失敗しました:', error);
+            }
+        }
+
+        // 選択されたカメラの映像を表示する関数
+        async function startWebCam(deviceId) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: deviceId }
+                });
+                const videoElement = document.getElementById('webcam');
+                videoElement.srcObject = stream;
+            } catch (error) {
+                console.error('カメラの取得に失敗しました:', error);
+            }
+        }
+
+        // セレクトボックスの選択が変更されたらカメラを切り替える
+        document.getElementById('cameraSelect').addEventListener('change', (event) => {
+            const deviceId = event.target.value;
+            if (deviceId) {
+                startWebCam(deviceId);
+            }
+        });
+
+        // ページが読み込まれたときにデバイスリストを取得
+        window.onload = listDevices;
+    </script>
+
+</body>
+</html>
